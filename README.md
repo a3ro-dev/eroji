@@ -1,4 +1,4 @@
-# Real-time Face Analysis with DeepFace and OpenCV
+# Eroji
 
 This project is a Python script that uses the DeepFace package to perform real-time face analysis on a video stream from a webcam. The script uses OpenCV to capture frames from the webcam, detect faces in the frames, and then use the DeepFace package to analyze each face and predict its gender, race, and facial expression. The script then displays the predictions in real-time on the screen, along with a bounding box around each detected face.
 
