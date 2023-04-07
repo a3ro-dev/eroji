@@ -16,11 +16,13 @@ class Eroji:
             for (x, y, w, h) in faces:
                 face = frame[y:y+h, x:x+w]
                 resized_face_224 = cv2.resize(face, (224, 224))
-                predicted_result = DeepFace.analyze(resized_face_224, actions=['gender', 'race', 'emotion'])
+                predicted_results = DeepFace.analyze(resized_face_224, actions=['gender', 'race', 'emotion'])
 
                 cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                predictions = f"{predicted_result['gender']}, {predicted_result['race']}, {predicted_result['emotion']}"
-                cv2.putText(frame, predictions, (x, y+h+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+
+                for i, predicted_result in enumerate(predicted_results):
+                    predictions = f"{predicted_result['gender']}, {predicted_result['race']}, {predicted_result['emotion']}"
+                    cv2.putText(frame, predictions, (x, y+h+20*(i+1)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
             cv2.imshow('Eroji', frame)
 
