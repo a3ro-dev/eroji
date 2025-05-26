@@ -11,7 +11,12 @@ st.set_page_config(
     page_title="Eroji - AI Face Analysis", 
     page_icon="🎭",
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'Get Help': 'https://github.com/a3ro-dev/eroji',
+        'Report a bug': 'https://github.com/a3ro-dev/eroji/issues',
+        'About': 'Eroji: Modern AI face analysis powered multimodal LLM'
+    }
 )
 
 # Enhanced CSS for modern, polished UI
@@ -20,6 +25,7 @@ st.markdown("""
     /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
     
+    /* Set default light theme values */
     :root {
         --bg-primary: #fafbfc;
         --bg-secondary: #f1f5f9;
@@ -571,9 +577,8 @@ st.markdown("""
 
 
 
-# Original header
+# Header with app title
 st.markdown('<div class="eroji-header">🎭 Eroji</div>', unsafe_allow_html=True)
-st.markdown('<div class="eroji-subtitle">Advanced AI-powered face analysis with detailed insights on emotions, demographics, and facial attributes. Upload an image to discover what our AI sees.</div>', unsafe_allow_html=True)
 
 # Get OpenAI API key from Streamlit secrets or environment variable
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"] if "OPENAI_API_KEY" in st.secrets else os.getenv("OPENAI_API_KEY")
@@ -581,27 +586,32 @@ if not OPENAI_API_KEY:
     st.error("🔑 Please set your OpenAI API key in Streamlit secrets or as an environment variable 'OPENAI_API_KEY'.")
     st.stop()
 
-# Create a container for better layout
+# Create a clean container for the uploader
 with st.container():
     uploaded_file = st.file_uploader(
-        "📸 Choose or drag & drop an image", 
+        "📷 Upload an image to analyze faces", 
         type=["jpg", "jpeg", "png", "webp"],
         help="Supported formats: JPG, JPEG, PNG, WEBP"
     )
     
     if not uploaded_file:
-        st.markdown("### 💡 Tips for Best Results")
-        col1, col2, col3 = st.columns(3)
+        # Use bento boxes for a cleaner look
+        st.write("")
         
+        col1, col2 = st.columns(2)
         with col1:
-            st.markdown("""
-            **✅ Good Images:**
-            - Clear, well-lit faces
-            - Front-facing or slight angle
-            - High resolution photos
-            - Real human faces
-            """)
+            st.info("💡 **Tips for best results**\n\n" +
+                  "• Use clear, well-lit photos\n" +
+                  "• Ensure faces are visible\n" +
+                  "• Front-facing poses work best")
         
+        with col2:
+            st.success("👤 **What you'll get**\n\n" +
+                     "• Emotion analysis\n" +
+                     "• Age and gender estimates\n" +
+                     "• Facial feature detection")
+        
+        # Second column for what to avoid
         with col2:
             st.markdown("""
             **❌ Avoid:**
@@ -611,14 +621,8 @@ with st.container():
             - Multiple overlapping faces
             """)
         
-        with col3:
-            st.markdown("""
-            **🔒 Privacy:**
-            - Images are not stored
-            - Analysis is temporary
-            - No data is retained
-            - GDPR compliant
-            """)
+        # Privacy information in a clean info box
+        st.info("🔒 **Privacy:** Images are not stored, analysis is temporary, and no data is retained.")
 
 result_json = None
 result_text = None
@@ -861,10 +865,9 @@ if image and result_json:
     # Header section
     st.markdown("## 📊 Analysis Results")
     
-    # Image display with better styling
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.image(image, caption="Analyzed Image", use_container_width=True)
+    # No need to show the image again, it's already displayed in the uploader
+    # Just add a small spacer
+    st.write("")
     
     # Summary section
     summary = result_json.get("summary", {})
@@ -965,10 +968,16 @@ if image and result_json:
                 facial_hair = face.get('attributes',{}).get('facial_hair','-').replace('_', ' ').title()
                 st.markdown(f"<div class='metric-row'><span class='metric-label'>🧔 Facial Hair</span><span class='metric-value'>{facial_hair}</span></div>", unsafe_allow_html=True)
                 
-                # Hair
+                # Hair with style information
                 hair_visible = 'Visible' if face.get('attributes',{}).get('hair',{}).get('visible',False) else 'Not visible'
                 hair_color = face.get('attributes',{}).get('hair',{}).get('color','').title()
-                st.markdown(f"<div class='metric-row'><span class='metric-label'>💇 Hair</span><span class='metric-value'>{hair_visible} {hair_color}</span></div>", unsafe_allow_html=True)
+                hair_style = face.get('attributes',{}).get('hair',{}).get('style','')
+                
+                hair_display = f"{hair_visible} {hair_color}"
+                if hair_style:
+                    hair_display += f", {hair_style}"
+                    
+                st.markdown(f"<div class='metric-row'><span class='metric-label'>💇 Hair</span><span class='metric-value'>{hair_display}</span></div>", unsafe_allow_html=True)
                 
                 # Glasses
                 glasses = face.get('attributes',{}).get('eyewear','-').replace('_', ' ').title()
@@ -1020,36 +1029,47 @@ if image and result_json:
         )
 
 else:
-    # Show demo info when no image is uploaded
+    # Show info when no image is uploaded - in the main view
     st.markdown("---")
+    
+    # Use a centered column for better layout
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.info("👆 Upload an image above to get started with AI-powered face analysis!")
+        # Simple instruction
+        st.info("👆 Upload an image above to get started!")
         
-        # Feature highlights
-        st.markdown("""
-        ### ✨ What Eroji Can Analyze:
+        # Use an expander for features to keep the UI clean
+        with st.expander("✨ What Eroji Can Analyze"):
+            st.markdown("""
+            **🎭 Emotional Analysis**
+            - Primary and secondary emotions with confidence scores
+            - Expression details and intensity levels
+            
+            **👤 Demographics**  
+            - Age estimation with confidence ranges
+            - Gender perception metrics
+            
+            **💇 Attributes**
+            - Hair style and color detection
+            - Facial hair analysis
+            - Glasses and accessories
+            - Facial pose estimation
+            
+            **⚡ Technical Metrics**
+            - Face quality assessment
+            - Visibility and lighting analysis
+            """)
         
-        🎭 **Emotional Intelligence**
-        - Primary and secondary emotions
-        - Expression intensity and details
-        
-        👥 **Demographics**  
-        - Age estimation with confidence ranges
-        - Gender prediction
-        - Ethnicity classification
-        
-        🎨 **Facial Attributes**
-        - Hair style and color
-        - Facial hair detection
-        - Accessories (glasses, jewelry)
-        - Head pose analysis
-        
-        🔍 **Technical Metrics**
-        - Face quality assessment
-        - Visibility scoring
-        - Lighting conditions
-        """)
-        
-        st.markdown("---")
-        st.markdown("*Powered by advanced AI vision models*")
+        # Add about section in another expander
+        with st.expander("ℹ️ About Eroji"):
+            st.markdown("""
+            Eroji is a modern face analysis tool built with Streamlit and powered by multimodal LLM
+            
+            - 🔒 **Privacy**: Your images are never stored permanently
+            - 🧠 **AI-Powered**: Uses advanced vision models for accurate analysis
+            - 📊 **Detailed**: Get comprehensive insights about facial features
+            
+            **Built by [a3ro-dev](https://github.com/a3ro-dev)**
+            """)
+            
+        st.caption("*Powered by multimodal LLM*")
